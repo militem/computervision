@@ -16,7 +16,7 @@ python script_video.py
 ### Punto extra
 
 ```
-python script_video.py
+python punto_extra.py
 ```
 
 ### Resultados
