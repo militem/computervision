@@ -18,6 +18,7 @@ success, frame = videoCapture.read()
 images_xy = []
 lines = []
 count_points = 0
+clicks = 0
 vertices = []
 square = [[0, 0], [1, 1], [2, 2], [3, 3]]
 
@@ -25,6 +26,9 @@ square = [[0, 0], [1, 1], [2, 2], [3, 3]]
 
 def distancia(punto):
     return math.sqrt(punto[0]**2 + punto[1]**2)
+
+def distancia_dos_puntos(punto1):
+    return math.sqrt((size[0] - punto1[0])**2 + (size[1] - punto1[1])**2)
 
 def save_frame(frame, square, code):
     puntos = [p for par in square for p in par]
@@ -56,17 +60,21 @@ def onMouse(event, x, y, flags, param):
     global lines
     global count_points
     global vertices
+    global clicks
 
     if event == cv2.EVENT_LBUTTONDOWN:
+        clicks += 1 
         if count_points > 0:
             lines.append([images_xy[-1],[x,y]])
             vertices.append((x,y))
 
+        images_xy.append([x,y])
         if count_points >= 3:
             sorted_point = sorted(images_xy, key=distancia)
-            up_left = sorted_point[-1]
+            p_final = sorted(images_xy, key=distancia_dos_puntos)
+            up_left = sorted_point[0]
             x1, y1 = up_left
-            down_right = sorted_point[0]
+            down_right = p_final[0]
             x2, y2 = down_right
             square[0] = [up_left, [x1, y2]]
             square[1] = [[x1, y2], down_right]
@@ -74,7 +82,6 @@ def onMouse(event, x, y, flags, param):
             square[3] = [[x2, y1], up_left]
 
         count_points += 1
-        images_xy.append([x,y])
 
 cv2.setMouseCallback('MyWindow', onMouse)
 
@@ -97,22 +104,25 @@ while success and cv2.waitKey(1) == -1:
             print("Cerrando programa...")
 
     if cv2.waitKey(25) & 0xFF == ord('s'):
-        frame_copy = np.copy(frame)            
-        vertices_copy = copy.deepcopy(vertices) 
-        square_copy = copy.deepcopy(square) 
-        code_for_thread = code
+        if(clicks <= 3):
+            print("Selecciona otro punto para recortar el frame...")
+        else:
+            frame_copy = np.copy(frame)            
+            vertices_copy = copy.deepcopy(vertices) 
+            square_copy = copy.deepcopy(square) 
+            code_for_thread = code
 
-        t = threading.Thread(
-            target=worker_save_and_cut,
-            args=(frame_copy, vertices_copy, square_copy, code_for_thread),
-            daemon=True
-        )
-        t.start()
-        print("Imagenes guardadas...")
-        try:    
-            cv2.imshow("MyWindow", frame)
-        except cv2.error:
-            print("Cerrando programa...")
+            t = threading.Thread(
+                target=worker_save_and_cut,
+                args=(frame_copy, vertices_copy, square_copy, code_for_thread),
+                daemon=True
+            )
+            t.start()
+            print("Imagenes guardadas...")
+            try:    
+                cv2.imshow("MyWindow", frame)
+            except cv2.error:
+                print("Cerrando programa...")
 
 videoCapture.release()
 cv2.destroyAllWindows()
