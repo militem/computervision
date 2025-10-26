@@ -42,7 +42,7 @@ def main():
 
     path_name = "assets"
 
-    videos = ["video1.avi", "video2.MOV", "video3.MOV"]
+    videos = ["video1.mp4", "video2.MOV", "video3.MOV"]
 
     for video in videos:
         procesar_video(path_name, video, rango1, rango2)
